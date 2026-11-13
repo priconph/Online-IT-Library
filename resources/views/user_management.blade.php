@@ -1,0 +1,619 @@
+@php $layout = 'layouts.user_layout'; @endphp
+@auth
+    @php
+        if(Auth::user()->user_level_id == 1){
+            $layout = 'layouts.admin_layout';
+        }
+        else if(Auth::user()->user_level_id == 2){
+            $layout = 'layouts.user_layout';
+        }
+    @endphp
+
+    {{-- if user's id is not equal to 1 (Administrator) --}}
+    @if(Auth::user()->user_level_id != 1)
+        <script type="text/javascript">
+            window.location = "user";
+        </script>
+    @endif
+@endauth
+
+@auth
+    @extends($layout)
+    <style>
+        .dataTables_scrollHead {
+            min-width: 100% !important;
+        }
+    </style>
+    @section('title', 'User')
+
+    @section('content_page')
+    <div class="content-wrapper">
+        <section class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1>User Management</h1>
+                    </div>
+                    <div class="col-sm-6">
+                            <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                            <li class="breadcrumb-item active">User Management</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title" style="margin-top: 8px;">User Management</h3>
+                                <button class="btn float-right reload"><i class="fas fa-sync-alt"></i></button>
+                            </div>
+                            <div class="card-body">
+                                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" id="user-management-tab" data-toggle="tab" href="#user-management" role="tab" aria-controls="user-management" aria-selected="true">User Management Tab</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" id="archive-tab" data-toggle="tab" href="#archive" role="tab" aria-controls="archive" aria-selected="false">Archive Tab</a>
+                                    </li>
+                                </ul>
+                                <div class="tab-content" id="myTabContent">
+                                    <div class="tab-pane fade show active" id="user-management" role="tabpanel" aria-labelledby="user-management-tab">
+                                        <div class="text-right mt-4">                   
+                                            <button class="btn btn-primary" data-toggle="modal" data-target="#modalAddUser" id="btnShowAddUserModal"><i class="fa fa-plus fa-md"></i> New User</button>
+                                        </div><br>
+                                        <div class="table-responsive">
+                                            <table id="tblUsers" class="table table-sm table-bordered table-striped table-hover" style="width: 100%;">
+                                                <thead>
+                                                    <tr>
+                                                        <th>ID</th>
+                                                        <th>Name</th>
+                                                        <th>Position</th>
+                                                        <th>Username</th>
+                                                        <th>User Level</th>
+                                                        <th>Status</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="archive" role="tabpanel" aria-labelledby="archive-tab">
+                                        <div class="table-responsive mt-5">
+                                            <table id="tblUsersArchive" class="table table-sm table-bordered table-striped table-hover display nowrap" style="width: 100%;">
+                                                <thead>
+                                                    <tr>
+                                                        <th>ID</th>
+                                                        <th>Name</th>
+                                                        <th>Position</th>
+                                                        <th>Username</th>
+                                                        <th>User Level</th>
+                                                        <th>Status</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ADD MODAL START -->
+    <div class="modal fade" id="modalAddUser">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-dark">
+                    <h4 class="modal-title"><i class="fa fa-user-plus"></i> Add User</h4>
+                    <button type="button" style="color: #fff;" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" id="formAddUser">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="form-group">
+                                    <label>Name</label>
+                                    <input type="text" class="form-control" name="name" id="txtAddUserName">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Position</label>
+                                    <input type="text" class="form-control" name="position" id="txtAddUserPosition">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Username</label>
+                                    <input type="text" class="form-control" name="username" id="txtAddUserUserName">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>User Level</label>
+                                    <select class="form-control select2bs4 selectUserLevel" name="user_level_id" id="selAddUserLevel" style="width: 100%;">
+                                    <!-- Code generated -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="submit" id="btnAddUser" class="btn btn-primary"><i id="iBtnAddUserIcon" class="fa fa-check"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div><!-- ADD MODAL END -->
+
+    <!-- EDIT MODAL START -->
+    <div class="modal fade" id="modalEditUser">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-dark">
+                    <h4 class="modal-title"><i class="fa fa-user"></i> Edit User</h4>
+                    <button type="button" style="color: #fff" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" id="formEditUser">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <input type="hidden" class="form-control" name="user_id" id="txtEditUserId">
+                                <div class="form-group">
+                                <label>Name</label>
+                                    <input type="text" class="form-control" name="name" id="txtEditUserName">
+                                </div>
+
+                                <div class="form-group">
+                                <label>Position</label>
+                                    <input type="text" class="form-control" name="position" id="txtEditUserPosition">
+                                </div>
+
+                                <div class="form-group">
+                                <label>Username</label>
+                                    <input type="text" class="form-control" name="username" id="txtEditUserUserName">
+                                </div>
+
+                                <div class="form-group">
+                                <label>User Level</label>
+                                    <select class="form-control select2bs4 selectUserLevel" name="user_level_id" id="selEditUserLevel" style="width: 100%;">
+                                    <!-- Code generated -->
+                                    </select>
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="submit" id="btnEditUser" class="btn btn-primary"><i id="iBtnEditUserIcon" class="fa fa-check"></i> Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div><!-- EDIT MODAL END -->
+
+    <!-- DELETE MODAL START -->
+    <div class="modal fade" id="modalDeleteUser">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-dark">
+                    <h4 class="modal-title"><i class="fa fa-user"></i> Delete User</h4>
+                    <button type="button" style="color: #fff" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" id="formDeleteUser">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="row">
+                            <label id="lblDeleteUser" class="text-secondary mt-2">Are you sure you want to delete this user?</label>
+                            <input type="hidden" class="form-control" name="user_id" id="txtDeleteUserId">
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="submit" id="btnDeleteUser" class="btn btn-primary"><i id="iBtnDeleteUserIcon" class="fa fa-check"></i> Delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div><!-- DELETE MODAL END -->
+
+    <!-- RESTORE MODAL START -->
+    <div class="modal fade" id="modalRestoreUser">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-dark">
+                    <h4 class="modal-title"><i class="fa fa-user"></i> Restore User</h4>
+                    <button type="button" style="color: #fff" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" id="formRestoreUser">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="row">
+                            <label id="lblRestoreUser" class="text-secondary mt-2">Are you sure you want to restore this user?</label>
+                            <input type="hidden" class="form-control" name="user_id_for_restore" id="txtRestoreUserId">
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="submit" id="btnRestoreUser" class="btn btn-primary"><i id="iBtnRestoreUserIcon" class="fa fa-check"></i> Restore</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div><!-- RESTORE MODAL END -->
+
+    <!-- CHANGE USER STAT MODAL START -->
+    <div class="modal fade" id="modalChangeUserStat">
+        <div class="modal-dialog">
+            <div class="modal-content modal-sm">
+                <div class="modal-header bg-dark">
+                    <h4 class="modal-title" id="h4ChangeUserTitle"><i class="fa fa-user"></i> Change Status</h4>
+                    <button type="button" style="color: #fff" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" id="formChangeUserStat">
+                    @csrf
+                    <div class="modal-body">
+                        <label id="lblChangeUserStatLabel"></label>
+                        <input type="hidden" name="user_id" placeholder="User Id" id="txtChangeUserStatUserId">
+                        <input type="hidden" name="status" placeholder="Status" id="txtChangeUserStatUserStat">
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+                        <button type="submit" id="btnChangeUserStat" class="btn btn-primary"><i id="iBtnChangeUserStatIcon" class="fa fa-check"></i> Yes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div> <!-- CHANGE USER STAT MODAL END -->
+
+    <!-- RESET PASSWORD MODAL START -->
+    <div class="modal fade" id="modalResetUserPassword">
+        <div class="modal-dialog">
+            <div class="modal-content modal-sm">
+                <div class="modal-header bg-dark">
+                    <h4 class="modal-title"><i class="fa fa-user"></i> Reset User Password</h4>
+                    <button type="button" style="color: #fff" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" id="formResetUserPassword">
+                    @csrf
+                    <div class="modal-body">
+                        <label>Are you sure to reset password?</label>
+                        <input type="hidden" name="user_id" placeholder="User Id" id="txtResetUserPasswordUserId">
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+                        <button type="submit" id="btnResetUserPassword" class="btn btn-primary"><i id="iBtnResetUserPasswordIcon" class="fa fa-check"></i> Yes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div><!-- RESET PASSWORD MODAL END -->
+
+    <!-- UPLOAD PDF MODAL START -->
+    <div class="modal fade" id="modalImportUser">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-dark">
+                    <h4 class="modal-title"><i class="fa fa-file-excel"></i>Upload PDF</h4>
+                    <button type="button" style="color: #fff" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" id="formImportUser" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="form-group">
+                                <label>File</label>
+                                    <input type="file" class="form-control" name="import_file" id="fileImportUser">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <button type="submit" id="btnImportUser" class="btn btn-primary"><i id="iBtnImportUserIcon" class="fa fa-check"></i>Upload PDF</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div><!-- UPLOAD PDF MODAL END -->
+    @endsection
+
+    <!--     {{-- JS CONTENT --}} -->
+    @section('js_content')
+    
+    <script type="text/javascript">
+        let dataTableUsers;
+        let arrSelectedUsers = [];
+
+        $(document).ready(function () {
+            bsCustomFileInput.init();
+            // Initialize Select2 Elements
+            $('.select2').select2();
+
+            // Initialize Select2 Elements
+            $('.select2bs4').select2({
+                theme: 'bootstrap4'
+            });
+
+            $(document).on('click','#tblUsers tbody tr',function(e){
+                $(this).closest('tbody').find('tr').removeClass('table-active');
+                $(this).closest('tr').addClass('table-active');
+            });
+
+
+            // custom dropdown for fixing z-index in datatables
+            (function () {
+                var dropdownMenu;
+
+                // if dropdown is shown, move it to the body                                     
+                $(window).on('show.bs.dropdown', function (e) {
+
+                    // grab the menu        
+                    dropdownMenu = $(e.target).find('.dropdownCustom');
+
+                    // append it to the body
+                    $('body').append(dropdownMenu.detach());
+
+                    // grab the new offset position
+                    var eOffset = $(e.target).offset();
+
+                    // make sure to place it where it would normally go
+                    dropdownMenu.css({
+                        'display': 'block',
+                            'top': eOffset.top + $(e.target).outerHeight(),
+                            'left': eOffset.left
+                    });
+                });
+
+                // and when you hide it, reattach the drop down, and hide it normally                                                   
+                $(window).on('hide.bs.dropdown', function (e) {
+                    $(e.target).append(dropdownMenu.detach());
+                    dropdownMenu.hide();
+                });
+            })();
+
+
+            function reload(){
+                dataTableUsers.draw();
+                dataTableUsersArchive.draw();
+            }
+            $('.reload').on('click', function(){
+                reload();
+            });
+
+
+            $('.reload').on('click', function() {
+                Pace.restart();
+            });
+
+
+            //============================== DATATABLES USER ==============================
+            // The GetUserLevel(); function is inside public/js/my_js/UserLevel.js
+            // this will fetch <option> based on the uri called get_user_levels
+            // then the controller will handle that uri to use specific method called get_user_levels() inside UserLevelController
+            GetUserLevel($(".selectUserLevel"));
+
+            dataTableUsers = $("#tblUsers").DataTable({
+                "processing" : false,
+                "serverSide" : true,
+                "responsive": true,
+                // "scrollX": true,
+                "scrollX": "100%",
+                "language": {
+                    "info": "Showing _START_ to _END_ of _TOTAL_ records",
+                    "lengthMenu":     "Show _MENU_ records",
+                },
+                "ajax" : {
+                    url: "view_users", // this will be pass in the uri called view_users that handles datatables of view_users() method inside UserController
+                },
+                "columns":[
+                    { "data" : "id" },
+                    { "data" : "name" },
+                    { "data" : "position" },
+                    { "data" : "username" },
+                    { "data" : "user_level.name" },
+                    { "data" : "status" },
+                    { "data" : "action", orderable:false, searchable:false }
+                ],
+            }); // USERS DATATABLES END
+
+
+            //============================== VIEW USER ARCHIVE DATATABLES ARCHIVE START ==============================
+            dataTableUsersArchive = $("#tblUsersArchive").DataTable({
+                "processing" : false,
+                "serverSide" : true,
+                // "responsive": true,
+                // "scrollX": true,
+                // "scrollX": "100%",
+                "language": {
+                    "info": "Showing _START_ to _END_ of _TOTAL_ records",
+                    "lengthMenu":     "Show _MENU_ records",
+                },
+                "ajax" : {
+                    url: "view_users_archive", // this will be pass in the uri called view_users_archive that handles datatables of view_users_archive() method inside UserController
+                },
+                "columns":[
+                    { "data" : "id" },
+                    { "data" : "name" },
+                    { "data" : "position" },
+                    { "data" : "username" },
+                    { "data" : "user_level.name" },
+                    { "data" : "status" },
+                    { "data" : "action", orderable:false, searchable:false }
+                ],
+            }); // VIEW USERS ARCHIVE DATATABLES END
+
+            
+            ///============================== ADD USER ==============================
+            // The AddUser(); function is inside public/js/my_js/User.js
+            // after the submission, the ajax request will pass the formAddUser(form) of data(input) in the uri(add_user)
+            // then the controller will handle that uri to use specific method called add_user() inside UserController
+            $("#formAddUser").submit(function(event){
+                event.preventDefault(); // to stop the form submission
+                AddUser();
+            });
+            // VALIDATION(remove errors)
+            $("#btnShowAddUserModal").click(function(){
+                $("#txtAddUserName").removeClass('is-invalid');
+                $("#txtAddUserName").attr('title', '');
+                $("#txtAddUserUserName").removeClass('is-invalid');
+                $("#txtAddUserUserName").attr('title', '');
+                $("#txtAddUserPosition").removeClass('is-invalid');
+                $("#txtAddUserPosition").attr('title', '');
+                $("#selAddUserLevel").removeClass('is-invalid');
+                $("#selAddUserLevel").attr('title', '');
+                $("#txtAddUserName").focus();
+                $("#selAddUserLevel").select2('val', '0');
+            });
+
+
+            //============================== EDIT USER ==============================
+            // actionEditUser is generated by datatables and open the modalEditUser(modal) to collect the id of the specified rows
+            $(document).on('click', '.actionEditUser', function(){
+                // the user-id(attr) is inside the datatables of UserController that will be use to collect the user-id
+                let userId = $(this).attr('user-id'); 
+                
+                // after clicking the actionEditUser(button) the userId will be pass to the txtEditUserId(input=hidden) and when the form is submitted this will be pass to ajax and collect user-id that will be use to query the user-id in the UserController to update the user
+                $("#txtEditUserId").val(userId);
+                
+                // COLLECT THE userId AND PASS TO INPUTS, BASED ON THE CLICKED ROWS
+                // GetUserByIdToEdit() function is inside User.js and pass the userId as an argument when passing the ajax that will be use to query the user-id of get_user_by_id() method inside UserController and pass the fetched user based on that query as $user(variable) to pass the values in the inputs of modalEditUser and also to validate the fetched values, inside GetUserByIdToEdit under User.js
+                GetUserByIdToEdit(userId);
+                
+                // VALIDATION(errors)
+                $("#txtEditUserName").removeClass('is-invalid');
+                $("#txtEditUserName").attr('title', '');
+                $("#txtEditUserUserName").removeClass('is-invalid');
+                $("#txtEditUserUserName").attr('title', '');
+                $("#selEditUserLevel").removeClass('is-invalid');
+                $("#selEditUserLevel").attr('title', '');
+                $("#txtEditUserName").focus();
+                // $("#selEditUserLevel").select2('val', '0');
+                // $("#chkEditUserWithEmail").prop('checked', 'checked');
+            });
+            // The EditUser(); function is inside public/js/my_js/User.js
+            // after the submission, the ajax request will pass the formEditUser(form) of its data(input) in the uri(edit_user)
+            // then the controller will handle that uri to use specific method called edit_user() inside UserController
+            $("#formEditUser").submit(function(event){
+                event.preventDefault();
+                EditUser();
+            });
+
+
+            //============================== DELETE USER ==============================
+            // actionDeleteUser is generated by datatables and open the modalDeleteUser(modal) to collect the id of the specified rows
+            $(document).on('click', '.actionDeleteUser', function(){
+                // the user-id(attr) is inside the datatables of UserController that will be use to collect the user-id
+                let userId = $(this).attr('user-id'); 
+                
+                // after clicking the actionEditUser(button) the userId will be pass to the txtDeleteUserId(input=hidden) and when the form is submitted this will be pass to ajax and collect user-id that will be use to query the user-id in the UserController to update the user
+                $("#txtDeleteUserId").val(userId);
+            });
+            $("#formDeleteUser").submit(function(event){
+                event.preventDefault();
+                DeleteUser();
+                // dataTableUsers.draw();
+                // dataTableUsersArchive.draw();
+            });
+
+
+            //============================== RESTORE USER ==============================
+            // actionRestoreUser is generated by datatables and open the modalRestoreUser(modal) to collect the id of the specified rows
+            $(document).on('click', '.actionRestoreUser', function(){
+                // the user-id(attr) is inside the datatables of UserController that will be use to collect the user-id
+                let userId = $(this).attr('user-id');
+                
+                // after clicking the actionEditUser(button) the userId will be pass to the txtRestoreUserId(input=hidden) and when the form is submitted this will be pass to ajax and collect user-id that will be use to query the user-id in the UserController to update the user
+                $("#txtRestoreUserId").val(userId);
+            });
+            $("#formRestoreUser").submit(function(event){
+                event.preventDefault();
+                RestoreUser();
+                // dataTableUsersArchive.draw();
+                // dataTableUsers.draw();
+            });
+
+
+            //============================== CHANGE USER STATUS ==============================
+            // actionChangeUserStat is generated by datatables and open the modalChangeUserStat(modal) to collect and change the id & status of the specified rows
+            $(document).on('click', '.actionChangeUserStat', function(){
+                let userStat = $(this).attr('status'); // the status will collect the value (1-active, 2-inactive)
+                let userId = $(this).attr('user-id'); // the user-id(attr) is inside the datatables of UserController that will be use to collect the user-id
+
+                $("#txtChangeUserStatUserStat").val(userStat); // collect the user status id the default is 2, this will be use to change the user status when the formChangeUserStat(form) is submitted
+                $("#txtChangeUserStatUserId").val(userId); // after clicking the aChangeUserStat(button) the userId will be pass to the txtChangeUserStatUserId(input=hidden) and when the form is submitted this will be pass to ajax and collect user-id that will be use to query the user-id in the UserController to update the status of the user
+
+                if(userStat == 1){
+                    $("#lblChangeUserStatLabel").text('Are you sure to activate?'); 
+                    $("#h4ChangeUserTitle").html('<i class="fa fa-user"></i> Activate User');
+                }
+                else{
+                    $("#lblChangeUserStatLabel").text('Are you sure to deactivate?');
+                    $("#h4ChangeUserTitle").html('<i class="fa fa-user"></i> Deactivate User');
+                }
+            });
+            // The ChangeUserStatus(); function is inside public/js/my_js/User.js
+            // after the submission, the ajax request will pass the formChangeUserStat(form) of data(input) in the uri(change_user_stat)
+            // then the controller will handle that uri to use specific method called change_user_stat() inside UserController
+            $("#formChangeUserStat").submit(function(event){
+                event.preventDefault();
+                ChangeUserStatus();
+            });
+
+
+            //============================== RESET USER PASSWORD ==============================
+            // aResetUserPass is generated by datatables to collect the id of the specified rows
+            $(document).on('click', '.actionResetUserPassword', function(){
+                let userId = $(this).attr('user-id');
+                $("#txtResetUserPasswordUserId").val(userId);
+            });
+            // The ResetUserPass(); function is inside public/js/my_js/User.js
+            // after the submission, the ajax request will pass the formResetUserPassword(form) of data(input) in the uri(reset_password)
+            // then the controller will handle that uri to use specific method called reset_password() inside UserController
+            $("#formResetUserPassword").submit(function(event){
+                event.preventDefault();
+                ResetUserPass();
+            });
+
+
+            //============================== SIGN OUT ==============================
+            $(document).ready(function(){
+                $("#formSignOut").submit(function(event){
+                    event.preventDefault();
+                    SignOut();
+                });
+            });
+
+        }); // JQUERY DOCUMENT READY END
+    </script>
+    
+    @endsection
+@endauth
